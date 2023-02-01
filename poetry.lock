@@ -95,6 +95,14 @@ unicode = ["unicodedata2 (>=14.0.0)"]
 woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
+name = "fpdf"
+version = "1.7.2"
+description = "Simple PDF generation for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -312,7 +320,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0941e9c52d9ee935323ac512d3b6ae079ed8e21b2f5424d902bd5abed4391e66"
+content-hash = "1b4821d72706bb22d19502d2b25fe9f0fcc48fff3e643acd3d7be9405a7475e7"
 
 [metadata.files]
 atomicwrites = []
@@ -323,6 +331,7 @@ colorama = []
 contourpy = []
 cycler = []
 fonttools = []
+fpdf = []
 idna = []
 kiwisolver = []
 matplotlib = []
