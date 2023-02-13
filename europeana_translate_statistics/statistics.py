@@ -132,8 +132,8 @@ def calculate_correlation_coefficient(x, y):
     y_formatted = np.array(y)
     coefficient = np.corrcoef(x_formatted,y_formatted)
     print(coefficient)
-    plt.matshow(coefficient)
-    plt.savefig('a.png')
+    # plt.matshow(coefficient)
+    # plt.savefig('a.png')
     # plt.imsave('test.png', img)
     return coefficient
 
@@ -209,22 +209,49 @@ def print_pdf_report_for_statistics():
     pdf.set_font('Arial', size=14)
     pdf.cell(w=0, h=8,txt="Campaign name: {}".format(CAMPAIGN_NAME),border=0, ln=1)
     pdf.cell(w=0, h=8,txt="Total annotations: {}".format(TOTAL_ANNOTATIONS),border=0, ln=1)
-    avg_rat = sum(all_annotations_avg_ratings_list) / annotations_with_score if annotations_with_score else 0
+    avg_rat = sum([ item / 10 for item in all_annotations_avg_ratings_list]) / annotations_with_score if annotations_with_score else 0
     pdf.cell(w=0, h=8,txt="Annotations with ratings: {}".format(annotations_with_score),border=0, ln=1)
-    pdf.cell(w=0, h=8,txt="Average rating: {}".format(avg_rat),border=0, ln=1)
-    pdf.cell(w=0, h=8, txt="Correlation coefficient: {}".format(calculate_correlation_coefficient(all_annotations_avg_ratings_list, all_annotations_confidence_list)), border=0, ln=1)
+    pdf.cell(w=0, h=8,txt="Average rating: {}".format(round(avg_rat,3)),border=0, ln=1)
+    pdf.cell(w=0, h=8,txt="Average confidence: {}".format(round(sum(all_annotations_confidence_list) / annotations_with_score if annotations_with_score else 0,3)),border=0, ln=1)
+    corr_matrix = calculate_correlation_coefficient(all_annotations_avg_ratings_list, all_annotations_confidence_list)
+    pdf.cell(w=0, h=8, txt="Pearson Correlation coefficient: {}".format(round(corr_matrix[0][1], 3)), border=0, ln=1)
     pdf.ln(10)
+
+    pdf.set_font('Arial', 'BU', 16)
+    pdf.cell(40,10, "General Error Type Statistics",0)
+    pdf.ln(15)
+    for error_type in all_annotations_error_type:
+        pdf.set_font('Arial', size=14)
+        pdf.cell(w=0, h=8,txt="{}: {}".format(ERROR_TYPES[error_type]['shortDescription'], all_annotations_error_type[error_type]),border=0, ln=1)
+       
+    pdf.ln(10)
+
     pdf.set_font('Arial', 'BU', 16)
     pdf.cell(40,10, "Statistics per field",0)
     pdf.ln(20)
     pdf.set_font('Arial', size=14)
 
     for stat in statistics:
-        pdf.set_font('Arial', 'U', size=14)
+        pdf.set_font('Arial', 'BU', size=14)
         pdf.cell(w=0, h=8,txt="Property name: {}".format(stat['property_name']),border=0, ln=1)
         pdf.set_font('Arial', size=14)
         pdf.cell(w=0, h=8,txt="Annotations with feedback: {}".format(stat['annotations_with_feedback_count']),border=0, ln=1)
-        pdf.cell(w=0, h=8,txt="Average rating: {}".format(stat['avg_rating']),border=0, ln=1)
+        pdf.cell(w=0, h=8,txt="Average rating: {}".format(round(stat['avg_rating'] / 10, 3)),border=0, ln=1)
+        pdf.cell(w=0, h=8,txt="Average confidence: {}".format(round(sum(stat['confidence_values_list']) / stat['annotations_with_feedback_count'] if stat['annotations_with_feedback_count'] else 0, 3)),border=0, ln=1)
+        corr_matrix = calculate_correlation_coefficient([ item / 10 for item in stat['average_propery_ratings_list']], [item / 10 for item in stat['confidence_values_list']])
+        pdf.cell(w=0, h=8,txt="Pearson Correlation Coefficient: {}".format(round(corr_matrix[0][1], 3)),border=0, ln=1)
+        pdf.ln(5)
+
+        pdf.set_font('Arial', 'U', size=14)
+        pdf.cell(w=0, h=8,txt="Error Type Statistics:",border=0, ln=1)
+        pdf.ln(5)
+        pdf.set_font('Arial', size=14)
+        
+        for error_type in stat['error_types']:
+            pdf.cell(5)
+            pdf.cell(w=0, h=8,txt="{}: {}".format(ERROR_TYPES[error_type]['shortDescription'], stat['error_types'][error_type]),border=0, ln=1)
+        
+
         pdf.ln(10)
 
     pdf.output('{}-annotations-report-{}.pdf'.format(CAMPAIGN_NAME, date.today().strftime("%d-%m-%Y")), 'F')
@@ -241,6 +268,10 @@ property_statistics = {}
 TOTAL_ANNOTATIONS = len(annotations_json)
 all_annotations_avg_ratings_list = []
 all_annotations_confidence_list = []
+all_annotations_error_type = {}
+for key in ERROR_TYPES:
+    all_annotations_error_type[key] = 0
+
 annotations_with_score = 0
 annotations_with_extended_feedback = []
 
@@ -255,6 +286,10 @@ for annotation in annotations_json:
         property_statistics[annotation_property]['annotations_count'] = 0
         property_statistics[annotation_property]['annotations_with_feedback_count'] = 0
         property_statistics[annotation_property]['average_propery_ratings_list'] = []
+        property_statistics[annotation_property]['confidence_values_list'] = []
+        property_statistics[annotation_property]['error_types'] = {}
+        for key in ERROR_TYPES:
+            property_statistics[annotation_property]['error_types'][key] = 0
     
     annotations_per_propetry[annotation_property].append(annotation)
     property_statistics[annotation_property]['annotations_count'] += 1
@@ -264,13 +299,20 @@ for annotation in annotations_json:
         property_statistics[annotation_property]['annotations_with_feedback_count'] += 1
         ratings = annotation['score']['ratedBy']
         for rating in ratings:
+            if key_exists_in_dict(rating, 'validationErrorType'):
+                for error_type in rating['validationErrorType']:
+                    all_annotations_error_type[error_type] += 1
+                    property_statistics[annotation_property]['error_types'][error_type] += 1
+
+        for rating in ratings:
             if key_exists_in_dict(rating, 'validationErrorType') or key_exists_in_dict(rating, 'validationComment') or key_exists_in_dict(rating, 'validationCorrection'):
                 annotations_with_extended_feedback.append(annotation)
                 break
         avg_rating = calculate_average_rating(ratings)
         property_statistics[annotation_property]['average_propery_ratings_list'].append(avg_rating)
+        property_statistics[annotation_property]['confidence_values_list'].append(annotation['annotators'][0]['confidence'])
         # print(avg_rating / 100)
-        all_annotations_avg_ratings_list.append(avg_rating / 10)
+        all_annotations_avg_ratings_list.append(avg_rating)
         all_annotations_confidence_list.append(annotation['annotators'][0]['confidence'])
         annotations_with_score += 1
 
@@ -282,7 +324,6 @@ for stat in statistics:
     avg_stats_list = stat['average_propery_ratings_list']
     annotations_with_feedback = stat['annotations_with_feedback_count']
     stat['avg_rating'] = sum(avg_stats_list) / annotations_with_feedback if annotations_with_feedback else 0
-    # stat.pop('average_propery_ratings_list')
 
 print_pdf_report_for_statistics()
 print_pdf_report_for_annotations_extended_feedback()
