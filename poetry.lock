@@ -119,6 +119,17 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "krippendorff"
+version = "0.5.2"
+description = "Fast computation of the Krippendorff's alpha measure."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "matplotlib"
 version = "3.6.3"
 description = "Python plotting package"
@@ -161,6 +172,26 @@ description = "Core utilities for Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "pandas"
+version = "1.5.3"
+description = "Powerful data structures for data analysis, time series, and statistics"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+numpy = [
+    {version = ">=1.20.3", markers = "python_version < \"3.10\""},
+    {version = ">=1.21.0", markers = "python_version >= \"3.10\""},
+    {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
+]
+python-dateutil = ">=2.8.1"
+pytz = ">=2020.1"
+
+[package.extras]
+test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 name = "pillow"
@@ -238,6 +269,14 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 six = ">=1.5"
 
 [[package]]
+name = "pytz"
+version = "2022.7.1"
+description = "World timezone definitions, modern and historical"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "requests"
 version = "2.28.2"
 description = "Python HTTP for Humans."
@@ -271,6 +310,14 @@ typing-extensions = "*"
 [package.extras]
 test = ["pytest (>=6.2)", "virtualenv (>20)"]
 toml = ["setuptools (>=42)"]
+
+[[package]]
+name = "simpledorff"
+version = "0.0.2"
+description = "Calculate Krippendorff's Alpha on any DataFrame"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "six"
@@ -320,7 +367,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1b4821d72706bb22d19502d2b25fe9f0fcc48fff3e643acd3d7be9405a7475e7"
+content-hash = "55d346d57c464927d4bf7979a09864cf9057eca140d5b05a1ddfb9eb202fbf31"
 
 [metadata.files]
 atomicwrites = []
@@ -334,18 +381,22 @@ fonttools = []
 fpdf = []
 idna = []
 kiwisolver = []
+krippendorff = []
 matplotlib = []
 more-itertools = []
 numpy = []
 packaging = []
+pandas = []
 pillow = []
 pluggy = []
 py = []
 pyparsing = []
 pytest = []
 python-dateutil = []
+pytz = []
 requests = []
 setuptools-scm = []
+simpledorff = []
 six = []
 tomli = []
 typing-extensions = []

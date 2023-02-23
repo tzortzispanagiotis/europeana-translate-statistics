@@ -3,6 +3,7 @@ import numpy as np
 from fpdf import FPDF
 from datetime import date
 import matplotlib.pyplot as plt
+from statistics import stdev
 
 plt.style.use('ggplot')
 
@@ -131,7 +132,7 @@ def calculate_correlation_coefficient(x, y):
     x_formatted = np.array(x)
     y_formatted = np.array(y)
     coefficient = np.corrcoef(x_formatted,y_formatted)
-    print(coefficient)
+    # print(coefficient)
     # plt.matshow(coefficient)
     # plt.savefig('a.png')
     # plt.imsave('test.png', img)
@@ -215,6 +216,9 @@ def print_pdf_report_for_statistics():
     pdf.cell(w=0, h=8,txt="Average confidence: {}".format(round(sum(all_annotations_confidence_list) / annotations_with_score if annotations_with_score else 0,3)),border=0, ln=1)
     corr_matrix = calculate_correlation_coefficient(all_annotations_avg_ratings_list, all_annotations_confidence_list)
     pdf.cell(w=0, h=8, txt="Pearson Correlation coefficient: {}".format(round(corr_matrix[0][1], 3)), border=0, ln=1)
+    pdf.cell(w=0, h=8, txt="Standard deviation of human-generated rating scores: {}".format(round(stdev([ item / 10 for item in all_annotations_avg_ratings_list ]), 3)), border=0, ln=1)
+    pdf.cell(w=0, h=8, txt="Standard deviation of software-generated confidence scores: {}".format(round(stdev(all_annotations_confidence_list), 3)), border=0, ln=1)
+
     pdf.ln(10)
 
     pdf.set_font('Arial', 'BU', 16)
@@ -235,11 +239,20 @@ def print_pdf_report_for_statistics():
         pdf.set_font('Arial', 'BU', size=14)
         pdf.cell(w=0, h=8,txt="Property name: {}".format(stat['property_name']),border=0, ln=1)
         pdf.set_font('Arial', size=14)
-        pdf.cell(w=0, h=8,txt="Annotations with feedback: {}".format(stat['annotations_with_feedback_count']),border=0, ln=1)
+        pdf.cell(w=0, h=8,txt="Annotations with ratings: {}".format(stat['annotations_with_feedback_count']),border=0, ln=1)
         pdf.cell(w=0, h=8,txt="Average rating: {}".format(round(stat['avg_rating'] / 10, 3)),border=0, ln=1)
         pdf.cell(w=0, h=8,txt="Average confidence: {}".format(round(sum(stat['confidence_values_list']) / stat['annotations_with_feedback_count'] if stat['annotations_with_feedback_count'] else 0, 3)),border=0, ln=1)
         corr_matrix = calculate_correlation_coefficient([ item / 10 for item in stat['average_propery_ratings_list']], [item / 10 for item in stat['confidence_values_list']])
         pdf.cell(w=0, h=8,txt="Pearson Correlation Coefficient: {}".format(round(corr_matrix[0][1], 3)),border=0, ln=1)
+        if len(stat['average_propery_ratings_list']) > 1:
+            pdf.cell(w=0, h=8, txt="Standard deviation of human-generated rating scores: {}".format(round(stdev([ item / 10 for item in stat['average_propery_ratings_list']]), 3)), border=0, ln=1)
+        else:
+            pdf.cell(w=0, h=8, txt="-", border=0, ln=1)
+        if len(stat['confidence_values_list']) > 1:
+            pdf.cell(w=0, h=8, txt="Standard deviation of software-generated confidence scores: {}".format(round(stdev(stat['confidence_values_list']), 3)), border=0, ln=1)
+        else:
+            pdf.cell(w=0, h=8, txt="-", border=0, ln=1)
+
         pdf.ln(5)
 
         pdf.set_font('Arial', 'U', size=14)
@@ -256,7 +269,7 @@ def print_pdf_report_for_statistics():
 
     pdf.output('{}-annotations-report-{}.pdf'.format(CAMPAIGN_NAME, date.today().strftime("%d-%m-%Y")), 'F')
 
-CAMPAIGN_NAME = 'translate-dutch'
+CAMPAIGN_NAME = 'translate-french'
 CROWDHERITAGE_API_BASE_URL = 'api.crowdheritage.eu'
 CROWDHERITAGE_EXPORT_CAMPAIGN_ANNOTATIONS_URL = "https://{}/annotation/exportCampaignAnnotations?filterForPublish=false&europeanaModelExport=false&campaignName={}".format(CROWDHERITAGE_API_BASE_URL, CAMPAIGN_NAME)
 
