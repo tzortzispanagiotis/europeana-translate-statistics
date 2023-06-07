@@ -269,6 +269,8 @@ def print_pdf_report_for_statistics():
 
     pdf.output('{}-annotations-report-{}.pdf'.format(CAMPAIGN_NAME, date.today().strftime("%d-%m-%Y")), 'F')
 
+# CAMPAIGN_NAME = 'translate-dutch'
+# CAMPAIGN_NAME = 'translate-italian'
 CAMPAIGN_NAME = 'translate-french'
 CROWDHERITAGE_API_BASE_URL = 'api.crowdheritage.eu'
 CROWDHERITAGE_EXPORT_CAMPAIGN_ANNOTATIONS_URL = "https://{}/annotation/exportCampaignAnnotations?filterForPublish=false&europeanaModelExport=false&campaignName={}".format(CROWDHERITAGE_API_BASE_URL, CAMPAIGN_NAME)
@@ -311,11 +313,16 @@ for annotation in annotations_json:
     if key_exists_in_dict(annotation, 'score') and key_exists_in_dict(annotation['score'], 'ratedBy'):
         property_statistics[annotation_property]['annotations_with_feedback_count'] += 1
         ratings = annotation['score']['ratedBy']
+        annotation_error_types = []
+
         for rating in ratings:
             if key_exists_in_dict(rating, 'validationErrorType'):
                 for error_type in rating['validationErrorType']:
-                    all_annotations_error_type[error_type] += 1
-                    property_statistics[annotation_property]['error_types'][error_type] += 1
+                    if error_type not in annotation_error_types:
+                        annotation_error_types.append(error_type)
+        for err_type in annotation_error_types:
+            all_annotations_error_type[err_type] += 1
+            property_statistics[annotation_property]['error_types'][err_type] += 1
 
         for rating in ratings:
             if key_exists_in_dict(rating, 'validationErrorType') or key_exists_in_dict(rating, 'validationComment') or key_exists_in_dict(rating, 'validationCorrection'):
